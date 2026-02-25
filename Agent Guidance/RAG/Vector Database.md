@@ -20,8 +20,8 @@ $$
 
 你希望“语义相近”的样本在向量空间里“距离更近/相似度更高”。向量数据库做的事情本质上是：
 
- - 存：存大量 $\mathbf{v}_i$（以及元数据）
- - 找：给定 query 向量 $\mathbf{q}$，在 $N$ 个向量里找 Top‑k 最近邻
+- 存：存大量 $\mathbf{v}_i$（以及元数据）
+- 找：给定 query 向量 $\mathbf{q}$，在 $N$ 个向量里找 Top‑k 最近邻
 
 ### 1.2 Embedding 维度、范数与归一化
 
@@ -49,7 +49,7 @@ $$
 - 内积（Dot product / Inner product）
 - 余弦相似度（Cosine similarity）
 
-很多“看起来不同”的度量，在某些条件下可以互相转化，这是理解“为什么某些库默认用 L2 也能做 cosine”的关键。
+很多“看起来不同”的度量，在某些条件下可以互相转化，这是理解“为什么某些库默认用 L2 也能做 cosine"的关键。
 
 ### 2.1 L2 Distance（欧氏距离）
 
@@ -92,13 +92,13 @@ $$
 \cos(\theta)=\frac{\mathbf{x}\cdot\mathbf{y}}{\|\mathbf{x}\|_2\|\mathbf{y}\|_2}
 $$
 
-当向量都归一化（$\|\mathbf{x}\|=\|\mathbf{y}\|=1$）：
+当向量都归一化 $\|\mathbf{x}\|=\|\mathbf{y}\|=1$：
 
 $$
 \|\mathbf{x}-\mathbf{y}\|_2^2 = 2 - 2\cos(\theta)
 $$
 
-因此，最大化 cosine 等价于最小化 L2 距离（平方）。这解释了很多系统里“用 L2 索引也能做 cosine”的原因。
+因此，最大化 cosine 等价于最小化 L2 距离（平方）。这解释了很多系统里“用 L2 索引也能做 cosine"的原因。
 
 ### 2.4 选择度量的工程建议
 
@@ -110,7 +110,7 @@ $$
 
 很多 ANN 索引的理论/实现更适配 L2；但实际可能需要做 MIPS（dot product）。常见做法是把 MIPS 转成 L2 NN。
 
-一种经典的向量增广（假设数据向量范数有上界 \( \|\mathbf{x}\|\le R\)）：
+一种经典的向量增广（假设数据向量范数有上界 $ \|\mathbf{x}\|\le R $）：
 
 $$
 \mathbf{x'} = [\mathbf{x}; \sqrt{R^2 - \|\mathbf{x}\|_2^2}],\quad
@@ -131,6 +131,7 @@ $$
 ## 3. Similarity Search（相似度检索）
 
 给定向量集合 $\{\mathbf{x}_i\}_{i=1}^N$ 和 query 向量 $\mathbf{q}$，检索 Top‑k 的数学形式是：
+
 $$
 \text{TopK}(\mathbf{q})=\operatorname{arg\,topk}_{i\in[1..N]}\ \text{sim}(\mathbf{q},\mathbf{x}_i)
 $$
@@ -197,9 +198,9 @@ ANN 的目标是在可接受的 recall 损失下，显著降低查询时间/内�
 #### 4.2.1 IVF（Inverted File Index）
 
 核心思想：
- - 先训练一个粗量化器（coarse quantizer），把空间划分成 $n_{\text{list}}$ 个簇（centroids）
- - 每个向量 $\mathbf{x}$ 被分配到最近的 centroid 对应的倒排表（list）中
- - 查询时只探测 $n_{\text{probe}}$ 个最相关的 lists
+- 先训练一个粗量化器（coarse quantizer），把空间划分成 $n_{\text{list}}$ 个簇（centroids）
+- 每个向量 $\mathbf{x}$ 被分配到最近的 centroid 对应的倒排表（list）中
+- 查询时只探测 $n_{\text{probe}}$ 个最相关的 lists
 
 关键参数：
 - nlist：簇的数量（倒排桶数量）
@@ -208,7 +209,7 @@ ANN 的目标是在可接受的 recall 损失下，显著降低查询时间/内�
   - nprobe 大：recall 高但更慢
 
 复杂度直觉：
- - 把全库从 $N$ 缩小到候选集大小 $C\approx N\cdot \frac{n_{\text{probe}}}{n_{\text{list}}}$，然后在候选集里再做更精确的距离计算。
+- 把全库从 $N$ 缩小到候选集大小 $C\approx N\cdot \frac{n_{\text{probe}}}{n_{\text{list}}}$，然后在候选集里再做更精确的距离计算。
 
 工程常识：
 - IVF 非常适合 1M+ 规模，并且能很好地和 PQ 组合（IVF‑PQ）。
@@ -313,7 +314,7 @@ IVF 解决候选集缩小，PQ 解决存储与距离计算加速。
   - 需要索引实现支持（例如对 HNSW 做 bitset 过滤/多图/分区）
 - 按 tenant 分库/分 collection：最干净但资源碎片化
 
-### 5.2 更新与删除：别被“支持 upsert”四个字骗了
+### 5.2 更新与删除：别被“支持 upsert"四个字骗了
 
 不同索引对动态更新的友好度差异很大：
 - Flat：最好（追加 + 删除标记都容易）
@@ -339,8 +340,8 @@ IVF 解决候选集缩小，PQ 解决存储与距离计算加速。
 |超大规模（十亿级）|严苛|高|IMI + PQ / 多级索引 / 分层存储|训练与系统复杂度上升，需要更强工程化|
 
 在做系统设计时，最好先明确四个数字：
-- \(N\)：向量数
-- \(d\)：向量维度
+- $N$：向量数
+- $d$：向量维度
 - SLA：P95/P99 延迟
 - QPS：峰值并发
 
@@ -409,8 +410,8 @@ LLM Generate
 
 ## 9. 你应该记住的三句话（背后的原理是什么）
 
-1) “normalize 后，cosine≈L2” — 数学等价来自 \(\|\mathbf{x}-\mathbf{y}\|^2 = 2-2\cos\theta\)（单位向量）
+1) "normalize 后，cosine≈L2" — 数学等价来自 $ \|\mathbf{x}-\mathbf{y}\|^2 = 2-2\cos\theta $（单位向量）
 
-2) “HNSW 是内存换时间” — 图越密、候选队列越大，越容易绕开局部最优，但存储边与访问候选都要付出成本
+2) "HNSW 是内存换时间” — 图越密、候选队列越大，越容易绕开局部最优，但存储边与访问候选都要付出成本
 
-3) “IVF‑PQ 是大规模的性价比” — IVF 缩小候选集，PQ 压缩存储并加速距离估计，把“全量 O(Nd)”变成“少量候选 + 近似距离”
+3) "IVF‑PQ 是大规模的性价比” — IVF 缩小候选集，PQ 压缩存储并加速距离估计，把“全量 $O(Nd)$"变成“少量候选 + 近似距离”
